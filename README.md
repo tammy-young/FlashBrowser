@@ -40,6 +40,8 @@
 3. **Navigate** to the unzipped folder using command line/terminal
 4. **Install dependencies:**
    ```bash
+   export npm_config_arch=x64
+   export npm_config_platform=darwin
    npm install --legacy-peer-deps
    ```
    Note: `--legacy-peer-deps` is required due to @cliqz/adblocker-electron peer dependency mismatch

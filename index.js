@@ -1,9 +1,9 @@
 const {
-    app,
-    protocol,
-    BrowserWindow,
+	app,
+	protocol,
+	BrowserWindow,
 	globalShortcut,
-    Menu
+	Menu
 } = require('electron');
 // fiae function for dynamic quick error changing
 function fiae(platform) {
@@ -14,7 +14,7 @@ const Store = require('./store.js');
 const contextMenu = require('electron-context-menu');
 const { ipcMain } = require('electron');
 let swfURL = 'no swf'
-const {download} = require('electron-dl');
+const { download } = require('electron-dl');
 contextMenu({
 	showSaveImageAs: true
 });
@@ -87,14 +87,14 @@ app.commandLine.appendSwitch('ignore-certificate-errors', 'true');
 app.commandLine.appendSwitch('allow-insecure-localhost', 'true');
 
 let sendWindow = (identifier, message) => {
-    mainWindow.webContents.send(identifier, message);
+	mainWindow.webContents.send(identifier, message);
 };
 
 const store = new Store({
-  configName: 'user-preferences',
-  defaults: {
-    windowBounds: { width: 1280, height: 720, max:false }
-  }
+	configName: 'user-preferences',
+	defaults: {
+		windowBounds: { width: 1280, height: 720, max: false }
+	}
 });
 
 // Add error handlers to catch any unhandled errors
@@ -106,26 +106,39 @@ process.on('unhandledRejection', (reason, promise) => {
 	console.error('UNHANDLED REJECTION:', reason);
 });
 
-app.on('ready',   () => {
+app.on('ready', () => {
 
 	// Build and set menu inside ready event (required on macOS)
 	const template = [
 		{
-		  label: 'FilterX',
-		  visible:true,
-		  submenu: [
-			{
-			  label: 'Exit FullScreen',
-			  accelerator: "Esc",
-			  visible:false,
-			  click(item, focusedWindow) {
-					if (focusedWindow.isFullScreen()) {
-						focusedWindow.setFullScreen(false);
-						mainWindow.webContents.send('Esc');
+			label: 'Edit',
+			submenu: [
+				{ role: 'undo' },
+				{ role: 'redo' },
+				{ type: 'separator' },
+				{ role: 'cut' },
+				{ role: 'copy' },
+				{ role: 'paste' },
+				{ role: 'delete' },
+				{ role: 'selectAll' }
+			]
+		},
+		{
+			label: 'FilterX',
+			visible: true,
+			submenu: [
+				{
+					label: 'Exit FullScreen',
+					accelerator: "Esc",
+					visible: false,
+					click(item, focusedWindow) {
+						if (focusedWindow.isFullScreen()) {
+							focusedWindow.setFullScreen(false);
+							mainWindow.webContents.send('Esc');
+						}
 					}
 				}
-			}
-		  ]
+			]
 		}
 	];
 
@@ -136,22 +149,22 @@ app.on('ready',   () => {
 		console.error('ERROR building/setting menu:', error);
 	}
 
-    let { width, height, isMax } = store.get('windowBounds');
-    let filePath = 'filePath';
+	let { width, height, isMax } = store.get('windowBounds');
+	let filePath = 'filePath';
 	console.log("inti param" + process.argv);
 
 	// SECURITY: Validate command-line arguments for SWF file paths
-	if(process.argv.length >= 2 && process.argv[1].indexOf(".swf") > 1) {
+	if (process.argv.length >= 2 && process.argv[1].indexOf(".swf") > 1) {
 		try {
 			const input = process.argv[1];
 
 			// Validate HTTP/HTTPS URLs
-			if(input.indexOf("http") >= 0) {
+			if (input.indexOf("http") >= 0) {
 				console.log(998 + input);
 				const cleanUrl = input.replace("FlashBrowser:", "");
 
 				// Basic URL validation to prevent malformed URLs
-				if(cleanUrl.match(/^https?:\/\/.+\.swf(\?.*)?$/i)) {
+				if (cleanUrl.match(/^https?:\/\/.+\.swf(\?.*)?$/i)) {
 					filePath = cleanUrl;
 				} else {
 					console.error('Invalid URL format:', cleanUrl);
@@ -164,7 +177,7 @@ app.on('ready',   () => {
 				localPath = localPath.replace(/\\/g, "/");
 
 				// Basic path traversal prevention - warn about suspicious patterns
-				if(localPath.includes("../") || localPath.includes("..\\")) {
+				if (localPath.includes("../") || localPath.includes("..\\")) {
 					console.warn('Warning: Path contains traversal patterns:', localPath);
 				}
 
@@ -175,63 +188,89 @@ app.on('ready',   () => {
 			filePath = 'filePath'; // Reset to default on error
 		}
 	}
-	if(width < 100 || height < 100) {
+	if (width < 100 || height < 100) {
 		width = 800;
 		height = 500;
 	}
 
-    mainWindow = new BrowserWindow({
-        width: width,
-        height: height,
+	mainWindow = new BrowserWindow({
+		width: width,
+		height: height,
 		titleBarStyle: 'hidden',
 		frame: true,
-		show:true,
+		show: true,
 		backgroundColor: '#202124',
-        webPreferences: {
-            nodeIntegration: true,
-            webviewTag: true,
-            plugins: true,
-	    contextIsolation: false,
-	    enableRemoteModule: true,
-	    additionalArguments: [filePath]
-        }
-    });
+		webPreferences: {
+			nodeIntegration: true,
+			webviewTag: true,
+			plugins: true,
+			contextIsolation: false,
+			enableRemoteModule: true,
+			additionalArguments: [filePath]
+		}
+	});
 
-    mainWindow.loadURL(`file://${__dirname}/browser.html`);
+	mainWindow.loadURL(`file://${__dirname}/browser.html`);
 
-	// Uncomment to open DevTools for debugging:
-	// mainWindow.webContents.openDevTools();
+	const registerClipboardShortcuts = (webContents) => {
+		webContents.on('before-input-event', (event, input) => {
+			const key = input.key ? input.key.toLowerCase() : '';
+			const isCmdOrCtrl = input.control || input.meta;
+			const isCopy = isCmdOrCtrl && !input.alt && !input.shift && key === 'c';
+			const isCut = isCmdOrCtrl && !input.alt && input.shift && key === 'x';
+			const isPaste = isCmdOrCtrl && !input.alt && !input.shift && key === 'v';
+			const isSelectAll = isCmdOrCtrl && !input.alt && !input.shift && key === 'a';
 
-	
+			if (isCopy) {
+				event.preventDefault();
+				webContents.copy();
+			} else if (isCut) {
+				event.preventDefault();
+				webContents.cut();
+			} else if (isPaste) {
+				event.preventDefault();
+				webContents.paste();
+			} else if (isSelectAll) {
+				event.preventDefault();
+				webContents.selectAll();
+			}
+		});
+	};
+
+	registerClipboardShortcuts(mainWindow.webContents);
+	mainWindow.webContents.on('did-attach-webview', (event, webContents) => {
+		registerClipboardShortcuts(webContents);
+	});
+
 	// Modify the user agent for all requests to the following urls.
 	const filter = {
-	  urls: ['https://*.darkorbit.com/*', 'https://*.whatsapp.com/*', '*://*/*.swf']
+		urls: ['https://*.darkorbit.com/*', 'https://*.whatsapp.com/*', '*://*/*.swf']
 	}
 
-	mainWindow.webContents.session.webRequest.onBeforeSendHeaders(filter,(details, callback) => {
+	mainWindow.webContents.session.webRequest.onBeforeSendHeaders(filter, (details, callback) => {
 
-		if(details.url && details.url.indexOf(".swf") === -1){
-		    console.log("BIGPOINT OR WHATSUP")
+		if (details.url && details.url.indexOf(".swf") === -1) {
+			console.log("BIGPOINT OR WHATSUP")
 			details.requestHeaders['X-APP'] = app.getVersion();
 			details.requestHeaders['User-Agent'] = 'BigpointClient/1.4.6';
-			if(details.url.indexOf("whatsapp") > 0) {
+			if (details.url.indexOf("whatsapp") > 0) {
 				details.requestHeaders['User-Agent'] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Safari/605.1.15";
 			}
 		}
-		else{
-		//	app.commandLine.appendSwitch('ppapi-flash-path', null);
-         console.log("swf url", details.url)
-		 swfURL = details.url
+		else {
+			//	app.commandLine.appendSwitch('ppapi-flash-path', null);
+			console.log("swf url", details.url)
+			swfURL = details.url
 		}
 
-        callback({ requestHeaders: details.requestHeaders })
-    });
+		callback({ requestHeaders: details.requestHeaders })
+	});
 
 	// SECURITY: Add Content Security Policy headers for additional protection
 	// Note: CSP is only applied to remote HTTP/HTTPS content, not local file:// resources
 	mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
 		// Only apply CSP to remote content (HTTP/HTTPS), not local files or Flash
-		if(details.url && details.url.match(/^https?:\/\//i) && details.url.indexOf(".swf") === -1) {
+		if (details.url && details.url.match(/^https?:\/\//i) && details.url.indexOf(".swf") === -1) {
 			callback({
 				responseHeaders: {
 					...details.responseHeaders,
@@ -246,141 +285,141 @@ app.on('ready',   () => {
 			callback({ responseHeaders: details.responseHeaders });
 		}
 	});
-	
-    sendWindow("version", app.getVersion());
-    
-    mainWindow.on('closed', () => {
-        mainWindow = null;
-    });
-	
-	
-	
 
-	
-	 
+	sendWindow("version", app.getVersion());
+
+	mainWindow.on('closed', () => {
+		mainWindow = null;
+	});
+
+
+
+
+
+
 	mainWindow.once('ready-to-show', () => {
-		if(isMax) {	
-		if(process.platform === "win32"){
-			mainWindow.maximize();
-			
+		if (isMax) {
+			if (process.platform === "win32") {
+				mainWindow.maximize();
+
+			}
+			else {
+				mainWindow.setFullScreen(true)
+			}
+
+
 		}
-		else{
-			mainWindow.setFullScreen(true)
-		}
-		
-		
-	 }
-     mainWindow.show()
+		mainWindow.show()
 	})
 
 
 	// Upper Limit is working of 500 %
 	mainWindow.webContents.setVisualZoomLevelLimits(1, 5).then(console.log("Zoom Levels Have been Set between 100% and 500%")).catch((err) => console.log(err));
-   
-   
-    mainWindow.on('resize', () => {
+
+
+	mainWindow.on('resize', () => {
 		var isMax = mainWindow.isMaximized() || mainWindow.isFullScreen()
-		
-		if(isMax) {
-			console.log( isMax);
+
+		if (isMax) {
+			console.log(isMax);
 			let { width, height, max } = store.get('windowBounds');
-			store.set('windowBounds', { width, height , isMax});		
+			store.set('windowBounds', { width, height, isMax });
 		}
-		else{
+		else {
 			let { width, height } = mainWindow.getBounds();
-			store.set('windowBounds', { width, height , isMax});	
+			store.set('windowBounds', { width, height, isMax });
 		}
-        
-    });
+
+	});
 
 
-	
+
 	ipcMain.on('download-button', async (event) => {
 		const winX = BrowserWindow.getFocusedWindow();
-		console.log( swfURL, 9921);
+		console.log(swfURL, 9921);
 
-		await download(winX,swfURL);
-   });
+		await download(winX, swfURL);
+	});
 
 
 	app.on('browser-window-focus', () => {
-			globalShortcut.register('CTRL+SHIFT+q', () => {
-				console.log(22321 + enav)
-				NAV.newTab('https://www.flash.pm/browser/preview', {
-					close: false,
-					icon: NAV.TAB_ICON,
-					
-				});
-			});
+		globalShortcut.register('CTRL+SHIFT+q', () => {
+			console.log(22321 + enav)
+			NAV.newTab('https://www.google.com', {
+				close: false,
+				icon: NAV.TAB_ICON,
 
-			globalShortcut.register('CommandOrControl+F', () => {
+			});
+		});
+
+		globalShortcut.register('CommandOrControl+F', () => {
 			mainWindow.webContents.send('on-find');
-			});
-			
-			
-			//globalShortcut.register("F11", toggleWindowFullScreen);
-			//globalShortcut.register("Escape", () => mainWindow.setFullScreen(true));
+		});
+
+
+		//globalShortcut.register("F11", toggleWindowFullScreen);
+		//globalShortcut.register("Escape", () => mainWindow.setFullScreen(true));
 
 
 
-		
 
-		   function toggleWindowFullScreen(){
-				mainWindow.setFullScreen(!mainWindow.isFullScreen())
-			}
-			ipcMain.on('fullScreen-click', toggleWindowFullScreen);
-			
-			
-			
-			ipcMain.on('clearChache-click', clearCacheFunction);
-			async function clearCacheFunction(){
-				console.log('clearCacheFunction()!')
-				await mainWindow.webContents.session.clearCache()
-				.then(()=>{
+
+		function toggleWindowFullScreen() {
+			mainWindow.setFullScreen(!mainWindow.isFullScreen())
+		}
+		ipcMain.on('fullScreen-click', toggleWindowFullScreen);
+
+
+
+		ipcMain.on('clearChache-click', clearCacheFunction);
+		async function clearCacheFunction() {
+			console.log('clearCacheFunction()!')
+			await mainWindow.webContents.session.clearCache()
+				.then(() => {
 					console.log('Cleared cache done! restarting..')
 					app.relaunch();
 					app.exit();
 				})
 
-				//console.log(22331,mainWindow.webContents.clearCache )
-				//let session = mainWindow.webContents.session;
-				//	mainWindow.webContents.clearCache();
-				//	app.relaunch();
-				//	app.exit();
-			}
-			
-		
-			globalShortcut.register("CTRL+SHIFT+I", () => {
-			 mainWindow.webContents.openDevTools();
-			});
-			
-			globalShortcut.register("CmdOrCtrl+=", () => {
-				console.log("CmdOrCtrl+");
-				mainWindow.webContents.zoomFactor = mainWindow.webContents.getZoomFactor() + 0.2;
-			});
-			globalShortcut.register("CmdOrCtrl+-", () => {
-				mainWindow.webContents.zoomFactor = mainWindow.webContents.getZoomFactor() - 0.2;
-			});
-		
-			globalShortcut.register("CTRL+SHIFT+F10", () => {
-				let session = mainWindow.webContents.session;
-				session.clearCache();
-				app.relaunch();
-				app.exit();
-			});
+			//console.log(22331,mainWindow.webContents.clearCache )
+			//let session = mainWindow.webContents.session;
+			//	mainWindow.webContents.clearCache();
+			//	app.relaunch();
+			//	app.exit();
+		}
+
+
+		globalShortcut.register("CTRL+SHIFT+I", () => {
+			mainWindow.webContents.openDevTools();
+		});
+
+		globalShortcut.register("CmdOrCtrl+=", () => {
+			console.log("CmdOrCtrl+");
+			mainWindow.webContents.zoomFactor = mainWindow.webContents.getZoomFactor() + 0.2;
+		});
+		globalShortcut.register("CmdOrCtrl+-", () => {
+			mainWindow.webContents.zoomFactor = mainWindow.webContents.getZoomFactor() - 0.2;
+		});
+
+		globalShortcut.register("CTRL+SHIFT+F10", () => {
+			let session = mainWindow.webContents.session;
+			session.clearCache();
+			app.relaunch();
+			app.exit();
+		});
 	})
 
 	app.on('browser-window-blur', () => {
-	  globalShortcut.unregisterAll()
+		globalShortcut.unregisterAll()
 	})
 
-		
-	mainWindow.webContents.zoomFactor = 1;
-	
-		
 
-	var {ElectronBlocker} = require('@cliqz/adblocker');
-	var {fetch} = require('cross-fetch');
+	mainWindow.webContents.zoomFactor = 1;
+
+
+
+	var { ElectronBlocker } = require('@cliqz/adblocker');
+	var { fetch } = require('cross-fetch');
 	//ElectronBlocker.fromPrebuiltAdsAndTracking(fetch).then((blocker)=>{	
 	//	blocker.enableBlockingInSession(mainWindow.webContents.session);
 	//	//console.log("--AddBlcoker started" + mainWindow.webContents.session);
@@ -388,113 +427,113 @@ app.on('ready',   () => {
 
 
 
-	
+
 });
 
-app.on('open-file', (event, path) =>
-{
-    event.preventDefault();
-    console.log(path);
+app.on('open-file', (event, path) => {
+	event.preventDefault();
+	console.log(path);
 });
 
 
 exports.sethome = (a) => homeSetter(a);
-	
-function homeSetter(a){
-     store.set('homepage', a );
-	 console.log("Favorite url:" + a);
+
+function homeSetter(a) {
+	store.set('homepage', a);
+	console.log("Favorite url:" + a);
 };
 
 exports.setFavorite = (a) => favoriteSetter(a);
-	
-function favoriteSetter(a){
-     let fav =  store.get('favorites');
-	 if(fav && fav.indexOf(a) ==-1 ) {
-	     fav.push(a);
-		 store.set('favorites', fav);
-		 settingsShow(true)
-	 }
-	 else{
-		 fav =  new Array()// [a]
-		 store.set('favorites', fav);
-	 }
-    
-	 console.log("S url:" + fav.indexOf(a));
+
+function favoriteSetter(a) {
+	let fav = store.get('favorites');
+	if (!Array.isArray(fav)) {
+		fav = [];
+	}
+	if (fav.indexOf(a) == -1) {
+		fav.push(a);
+		store.set('favorites', fav);
+		settingsShow(true)
+	}
 };
+
+exports.getFavorites = () => getFavorites();
+
+function getFavorites() {
+	let fav = store.get('favorites');
+	return Array.isArray(fav) ? fav : [];
+}
 
 exports.removeAllFav = (a) => removeAllFav(a);
 
-function removeAllFav(){
-    
-	 let fav2 = [] 
-	
-	 store.set('favorites', fav2);
-	 settingsShow(true)
-	 console.log("removeAllFav" );
-	
+function removeAllFav() {
+
+	let fav2 = []
+
+	store.set('favorites', fav2);
+	settingsShow(true)
+	console.log("removeAllFav");
+
 };
 
 
 exports.removeFav = (a) => removeFav(a);
 
-function removeFav(a){
-     let fav =  store.get('favorites');
-	 let fav2 = [] 
-	 for ( var i=0; i<fav.length; i++){
-		if(i!=a && typeof fav[i] === 'string'){
+function removeFav(a) {
+	let fav = store.get('favorites');
+	let fav2 = []
+	for (var i = 0; i < fav.length; i++) {
+		if (i != a && typeof fav[i] === 'string') {
 			fav2.push(fav[i])
 		}
-	 }
-	 store.set('favorites', fav2);
-	 settingsShow(true)
-	 console.log("removeFav" + a + fav2.length);
-	
+	}
+	store.set('favorites', fav2);
 };
 
 exports.showSettings = (a) => settingsShow(a);
-	
-function settingsShow(a){
-	let fav =  store.get('favorites');
+
+function settingsShow(a) {
+	let fav = store.get('favorites');
 	mainWindow.webContents.send('ping', fav, a);
 };
 
 
 app.on('window-all-closed', () => {
-    //if (process.platform !== 'darwin') {
-        app.quit();
-    //}
+	//if (process.platform !== 'darwin') {
+	app.quit();
+	//}
 });
 /*
 const {autoUpdater} = require("electron-updater");
 
  autoUpdater.on('checking-for-update', () => {
-    sendWindow('checking-for-update', '');
+		sendWindow('checking-for-update', '');
 });
 
 autoUpdater.on('update-available', () => {
-    sendWindow('update-available', '');
+		sendWindow('update-available', '');
 });
 
 autoUpdater.on('update-not-available', () => {
-    sendWindow('update-not-available', '');
+		sendWindow('update-not-available', '');
 });
 
 autoUpdater.on('error', (err) => {
-    sendWindow('error', 'Error: ' + err);
+		sendWindow('error', 'Error: ' + err);
 });
 
 autoUpdater.on('download-progress', (d) => {
-    sendWindow('download-progress', {
-        speed: d.bytesPerSecond,
-        percent: d.percent,
-        transferred: d.transferred,
-        total: d.total
-    });
+		sendWindow('download-progress', {
+				speed: d.bytesPerSecond,
+				percent: d.percent,
+				transferred: d.transferred,
+				total: d.total
+		});
 });
 
 autoUpdater.on('update-downloaded', () => {
-    sendWindow('update-downloaded', 'Update downloaded');
-    autoUpdater.quitAndInstall();
+		sendWindow('update-downloaded', 'Update downloaded');
+		autoUpdater.quitAndInstall();
 }); */
 
 
