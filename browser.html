@@ -87,6 +87,60 @@
 		});
 
 
+		// Keep address bar in sync with actual webview URL (including redirects)
+		function updateAddressBar(url) {
+			const input = document.getElementById('nav-ctrls-url');
+			if (input) {
+				try {
+					input.value = url || input.value;
+				} catch (e) {
+					console.error('Failed to update address bar:', e);
+				}
+			}
+		}
+
+		function attachWebviewListeners(webview) {
+			if (!webview) return;
+			// Avoid attaching twice
+			if (webview.__address_listeners_attached) return;
+			webview.__address_listeners_attached = true;
+
+			const copyUrlFromEvent = (event) => {
+				let url = event && event.url ? event.url : null;
+				if (!url && typeof webview.getURL === 'function') {
+					try { url = webview.getURL(); } catch (e) { }
+				}
+				if (url) updateAddressBar(url);
+			};
+
+			webview.addEventListener('did-navigate', copyUrlFromEvent);
+			webview.addEventListener('did-navigate-in-page', copyUrlFromEvent);
+			webview.addEventListener('did-redirect-navigation', copyUrlFromEvent);
+			webview.addEventListener('will-navigate', copyUrlFromEvent);
+			webview.addEventListener('did-stop-loading', function () {
+				copyUrlFromEvent({ url: (typeof webview.getURL === 'function' ? webview.getURL() : webview.getAttribute('src')) });
+			});
+		}
+
+		// Attach to existing webviews
+		const viewsContainer = document.getElementById('nav-body-views');
+		if (viewsContainer) {
+			Array.from(viewsContainer.querySelectorAll('webview')).forEach(attachWebviewListeners);
+
+			// Observe for new webviews added by electron-navigation and attach listeners
+			const mo = new MutationObserver(mutations => {
+				for (const m of mutations) {
+					for (const node of m.addedNodes) {
+						if (node.tagName && node.tagName.toLowerCase() === 'webview') {
+							attachWebviewListeners(node);
+						}
+					}
+				}
+			});
+			mo.observe(viewsContainer, { childList: true, subtree: true });
+		}
+
+
 		function toggleFullscreen(event) {
 			if (event.key === 'Escape') {
 				ipcRenderer.send('fullScreen-click');
