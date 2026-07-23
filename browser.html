@@ -4,8 +4,7 @@
 <head>
 	<link rel="stylesheet" href="themes/chrome-like.css">
 </head>
-<p id='topspacer' style="color:grey;font-size:1px; height:28px; min-height:28px !important; -webkit-app-region: drag;">
-</p>
+<p id='topspacer'></p>
 <div id="flash-tabs" style="display: inline;">
 	<embed id="FlashTab1" src="about:blank#404" style='display: none;' width="320" height="200"></embed>
 	<embed id="FlashTab2" src="about:blank#404" style='display: none;' width="320" height="200"></embed>
@@ -15,8 +14,10 @@
 	<div class="space-y-2 flex-col">
 		<h1 style="margin-bottom: 0;">Menu</h1>
 		<button width="100%" onclick="showHideSettings()" class="settings-button error-message">Close Menu</button>
-		<button width="100%" onclick="dispachClearCache()" class="settings-button error-message">Clear cache and restart</button>
-		<button width="100%" onclick="clearAllFavorites()" class="settings-button error-message">Clear all favorites</button>
+		<button width="100%" onclick="dispachClearCache()" class="settings-button error-message">Clear cache and
+			restart</button>
+		<button width="100%" onclick="clearAllFavorites()" class="settings-button error-message">Clear all
+			favorites</button>
 	</div>
 
 	<div id="favoritesDiv">
@@ -25,9 +26,9 @@
 	</div>
 </div>
 
-<body>
+<body class="flex-col">
 
-	<div id="window-controls" style="display: none ;">
+	<div id="window-controls" style="display: none;">
 		<div class="button" id="min-button">
 			<img class="icon"
 				srcset="icons/min-w-10.png 1x, icons/min-w-12.png 1.25x, icons/min-w-15.png 1.5x, icons/min-w-15.png 1.75x, icons/min-w-20.png 2x, icons/min-w-20.png 2.25x, icons/min-w-24.png 2.5x, icons/min-w-30.png 3x, icons/min-w-30.png 3.5x"
@@ -52,7 +53,13 @@
 
 	<div id="nav-body-tabs"></div>
 
-	<div id="nav-body-ctrls"></div>
+	<div id="nav-body-ctrls">
+		<button id="fs-button" type="button" title="Set as Favorite" onclick="setFavorit()">⭐️</button>
+		<button id="fs-button" title="Set as hompage" onclick="setHome()">🏠</button>
+		<button id="fs-button" title="Save SWF" onclick="SaveSWFFunction()">💾</button>
+		<button id="fs-button" title="Mute/UnMute" onclick="onMute()">🔊</button>
+		<button id="fs-button" title="Show/Hide Settings" onclick="showSettings()">⚙️</button>
+	</div>
 
 	<div id="nav-body-views"></div>
 
@@ -161,13 +168,10 @@
 			const mainProcess = remote.require('./index');
 			let favs = mainProcess.getFavorites();
 
-			console.log('Retrieved favorites:', favs);
-
-			if (typeof favs === 'string') {
+			if (!Array.isArray(favs)) {
+				console.log('Favorites is not an array, converting to array.');
 				favs = [favs];
 			}
-
-			document.getElementById('favoritesDiv').innerHTML = "<h1>Favourites</h1><ul></ul>";
 
 			if (favs.length === 0) {
 				let noFavsMessage = document.createElement('p');
@@ -176,22 +180,11 @@
 				return;
 			}
 
-			for (var i = 0; i < favs.length; i++) {
-				document.getElementById('favoritesDiv').appendChild(makeUL(favs[i]));
-			}
+			const favsDiv = document.getElementById('favoritesDiv');
+			favsDiv.innerHTML = "<h1>Favourites</h1><ul>" + makeUL(favs).innerHTML + "</ul>";
 		}
 
 		getFavorites();
-
-		/// Set Favorite Button
-
-		let setFavoriteButton = document.createElement("button");
-		setFavoriteButton.id = 'fs-button';
-		setFavoriteButton.type = 'button';
-		setFavoriteButton.innerHTML = '⭐️';
-		setFavoriteButton.title = "Set as Favorite"
-		setFavoriteButton.addEventListener('click', setFavorit);
-		controls.appendChild(setFavoriteButton);
 
 		function setFavorit(event) {
 			try {
@@ -225,18 +218,12 @@
 				const { remote } = require('electron');
 				const mainProcess = remote.require('./index');
 				mainProcess.setFavorite(favURL);
+				getFavorites(); // Refresh the favorites list after adding
 			} catch (error) {
 				console.error('Error setting favorite:', error);
 			}
 		}
 
-		// Set Home
-		let setHomeButton = document.createElement("button");
-		setHomeButton.id = 'fs-button';
-		setHomeButton.innerHTML = '🏠';
-		setHomeButton.title = 'Set as hompage';
-		setHomeButton.onclick = setHome;
-		controls.appendChild(setHomeButton);
 		function setHome(event) {
 			try {
 				// SECURITY: Sanitize URL input before setting as homepage
@@ -262,40 +249,7 @@
 				console.error('Error setting homepage:', error);
 			}
 		}
-		//Zoom In out
-		let zoomInButton = document.createElement("button");
-		zoomInButton.id = 'fs-button';
-		zoomInButton.innerHTML = '➕';
-		zoomInButton.title = 'Zoom In';
-		zoomInButton.onclick = zoomIn;
-		controls.appendChild(zoomInButton);
-		function zoomIn(event) {
-			webview = document.getElementById('nav-body-views').getElementsByClassName("active")[0];
-			if (webview) {
-				webview.zoomFactor = webview.getZoomFactor() + 0.2//1
 
-			}
-		}
-		let zoomOutButton = document.createElement("button");
-		zoomOutButton.id = 'fs-button';
-		zoomOutButton.innerHTML = '➖';
-		zoomInButton.title = 'Zoom Out';
-		zoomOutButton.onclick = zoomOut;
-		controls.appendChild(zoomOutButton);
-		function zoomOut(event) {
-			webview = document.getElementById('nav-body-views').getElementsByClassName("active")[0];
-			if (webview) {
-				webview.zoomFactor = webview.getZoomFactor() - 0.2//1
-			}
-		}
-
-
-		let savetButton = document.createElement("button");
-		savetButton.id = 'fs-button';
-		savetButton.innerHTML = '💾';
-		savetButton.title = 'Save SWF';
-		savetButton.onclick = SaveSWFFunction;
-		controls.appendChild(savetButton);
 		function SaveSWFFunction(event) {
 			ipcRenderer.send('download-button');
 			console.log("Send save SWF")
@@ -314,26 +268,7 @@
 			document.getElementById('topspacer').addEventListener("dblclick", handleDoubleClick);
 		}
 
-
-
-		//FullScreen Buton
-
-		let isFullScreen = false;
-		let fsButton = document.createElement("button");
-		fsButton.id = 'fs-button';
-		fsButton.title = "FullScreen"
-		fsButton.innerHTML = '🔳️';
-		fsButton.onclick = toggleFullscreen;
-		controls.appendChild(fsButton);
-
 		// Mute button
-
-		let muteButton = document.createElement("button");
-		muteButton.id = 'fs-button';
-		muteButton.innerHTML = '🔊';
-		muteButton.title = "Mute/UnMute"
-		muteButton.onclick = onMute;
-		controls.appendChild(muteButton);
 		function onMute(event) {
 			webview = document.getElementById('nav-body-views').getElementsByClassName("active")[0];
 			if (webview) {
@@ -345,14 +280,8 @@
 					webview.setAudioMuted(true);
 					muteButton.innerHTML = '🔈';
 				}
-
-
 			}
 		}
-
-
-
-
 
 		///// Clear Cache Button ////
 
@@ -367,6 +296,7 @@
 				const { remote } = require('electron');
 				const mainProcess = remote.require('./index.js');
 				mainProcess.removeAllFav();
+				getFavorites(); // Refresh the favorites list after clearing
 				console.log("Cleaned favorites")
 			} catch (error) {
 				console.error('Error clearing favorites:', error);
@@ -374,13 +304,6 @@
 		}
 
 		/////Settings Button /////	
-
-		let settingsButton = document.createElement("button");
-		settingsButton.id = 'fs-button';
-		settingsButton.innerHTML = '⚙️';
-		settingsButton.title = "Show/Hide Settings";
-		settingsButton.onclick = showSettings;
-		controls.appendChild(settingsButton);
 		function showSettings(event) {
 			try {
 				if (event.type === 'click') {
@@ -419,39 +342,40 @@
 		}
 
 		var div = document.querySelector('.settings-menu');
-		div.style = "display: none;";
 		require('electron').ipcRenderer.on('ping', showHideSettings);
 		require('electron').ipcRenderer.on('Esc', exitFullScreen);
 
 
 		function showHideSettings(event, message, refresh) {
-			console.log("showHideSettings" + message + "  " + refresh)
+			console.log("showHideSettings" + " " + message + "  " + refresh);
 			var settingsMenuDiv = document.querySelector('.settings-menu');
 			if (!settingsMenuDiv) {
 				return;
 			}
 
-			var isHidden = window.getComputedStyle(settingsMenuDiv).display === 'none';
+			var isOpen = settingsMenuDiv.classList.contains('open');
 
 			if (refresh && message) {
-				document.getElementById('favoritesDiv').innerHTML = "<h1>Favourites</h1><ul></ul>";
-				document.getElementById('favoritesDiv').appendChild(makeUL(message));
-				settingsMenuDiv.style.display = 'flex';
+				getFavorites();
+				settingsMenuDiv.classList.add('open');
 				return;
 			}
 
-			settingsMenuDiv.style.display = isHidden ? 'flex' : 'none';
+			settingsMenuDiv.classList.toggle('open', !isOpen);
 		}
 
 
 		function makeUL(array) {
+
 			// Create the list element:
 			var list = document.createElement('ul');
 			if (array == null) { array = new Array() }
 			for (var i = 0; i < array.length; i++) {
 				// Create the list item:
 				var item = document.createElement('li');
+				item.className = "space-x-2 flex-row";
 				if (typeof array[i] === 'string') {
+					console.log("is string" + array[i]);
 					var a = document.createElement('a')
 					a.text = array[i];
 					a.href = array[i]
@@ -484,21 +408,10 @@
 			return list;
 		}
 
-
-
-
-
-
-
 		/// Suggest nav bar
 		let navBar = document.getElementById('nav-ctrls-url')
 		navBar.addEventListener('keyup', checkFavorites);
 		function checkFavorites(e) {
-
-
-
-
-
 
 			let listFavorites = store.get('favorites');
 			console.log('checkFavoritess', listFavorites);
@@ -523,7 +436,6 @@
 
 		}
 
-
 		//Find on Page	
 		let finInwebview = document.getElementById('nav-body-views').getElementsByClassName("active")[0];
 		let findInPage;
@@ -538,10 +450,7 @@
 			console.error('Error initializing FindInPage:', error);
 		}
 
-
 		ipcRenderer.on('on-find', (e, args) => {
-
-
 
 			try {
 				if (findInPage) {
@@ -552,10 +461,6 @@
 				console.error('Error opening find window:', error);
 			}
 		})
-
-
-
-
 
 		//Promote on last tab close:
 		let closeTabBtns = document.getElementsByClassName("nav-tabs-tab")[0];
@@ -579,7 +484,6 @@
 				//win.close();
 			}
 		};
-
 
 	</script>
 </body>

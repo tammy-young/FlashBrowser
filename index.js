@@ -200,6 +200,7 @@ app.on('ready', () => {
 		frame: true,
 		show: true,
 		backgroundColor: '#202124',
+		trafficLightPosition: { x: 14, y: 28 },
 		webPreferences: {
 			nodeIntegration: true,
 			webviewTag: true,
@@ -453,7 +454,6 @@ function favoriteSetter(a) {
 	if (fav.indexOf(a) == -1) {
 		fav.push(a);
 		store.set('favorites', fav);
-		settingsShow(true)
 	}
 };
 
@@ -461,7 +461,18 @@ exports.getFavorites = () => getFavorites();
 
 function getFavorites() {
 	let fav = store.get('favorites');
-	return Array.isArray(fav) ? fav : [];
+
+	if (!fav) {
+		fav = [];
+		store.set('favorites', fav);
+	}
+
+	if (!Array.isArray(fav)) {
+		fav = [fav];
+		store.set('favorites', fav);
+	}
+
+	return fav;
 }
 
 exports.removeAllFav = (a) => removeAllFav(a);
@@ -471,7 +482,6 @@ function removeAllFav() {
 	let fav2 = []
 
 	store.set('favorites', fav2);
-	settingsShow(true)
 	console.log("removeAllFav");
 
 };
