@@ -167,10 +167,28 @@
   fill: #0e8cd0 !important;
   -webkit-app-region: no-drag;
   border-radius: 100%;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: background 300ms ease, transform 300ms ease;
+}
+
+.add-tab-button {
+  filter: brightness(0) invert(1);
+  -webkit-app-region: no-drag;
+  border-radius: 100%;
+  width: 12px;
+  height: 12px;
+  cursor: pointer;
+
+  transition: background 300ms ease, transform 300ms ease;
 }
 
 #nav-tabs-add:hover {
-  fill: #0ba0f1 !important;
+  background-color: #454648 !important;
 }
 
 .nav-tabs-tab {

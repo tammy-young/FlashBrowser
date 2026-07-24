@@ -172,6 +172,47 @@
 			activeObserver.observe(viewsContainer, { subtree: true, attributes: true, attributeFilter: ['class'] });
 		}
 
+		// Replace injected add-tab icon element with our PNG when it appears
+		function replaceAddTabIcon(el) {
+			if (!el) return;
+			try {
+				// if already replaced, skip
+				if (el.__custom_add_icon) return;
+				el.__custom_add_icon = true;
+				// remove any existing children (SVG or text)
+				while (el.firstChild) el.removeChild(el.firstChild);
+				const img = document.createElement('img');
+				img.src = 'icons/add.png';
+				img.alt = 'Add tab';
+				img.draggable = false;
+				img.className = 'add-tab-button';
+				el.appendChild(img);
+				el.style.background = 'transparent';
+				el.style.padding = '4px';
+			} catch (e) {
+				console.error('replaceAddTabIcon error', e);
+			}
+		}
+
+		// immediate replace if already present
+		const existingAdd = document.getElementById('nav-tabs-add');
+		if (existingAdd) replaceAddTabIcon(existingAdd);
+
+		// watch for injected add button
+		const addObserver = new MutationObserver(mutations => {
+			for (const m of mutations) {
+				for (const n of m.addedNodes) {
+					if (!n) continue;
+					if (n.id === 'nav-tabs-add') replaceAddTabIcon(n);
+					else if (n.querySelector) {
+						const found = n.querySelector('#nav-tabs-add');
+						if (found) replaceAddTabIcon(found);
+					}
+				}
+			}
+		});
+		addObserver.observe(document.body, { childList: true, subtree: true });
+
 		function toggleFullscreen(event) {
 			if (event.key === 'Escape') {
 				ipcRenderer.send('fullScreen-click');
