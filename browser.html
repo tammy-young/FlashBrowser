@@ -132,7 +132,10 @@
 				if (!url && typeof webview.getURL === 'function') {
 					try { url = webview.getURL(); } catch (e) { }
 				}
-				if (url) updateAddressBar(url);
+				if (url) {
+					updateAddressBar(url);
+					toggleFavouriteButton(store.get('favorites')?.includes(url));
+				};
 			};
 
 			webview.addEventListener('did-navigate', copyUrlFromEvent);
@@ -171,6 +174,7 @@
 							try { url = (typeof t.getURL === 'function') ? t.getURL() : t.getAttribute('src'); } catch (e) { }
 							if (url) updateAddressBar(url);
 							suggestFavorites();
+							toggleFavouriteButton(store.get('favorites')?.includes(url));
 						}
 					}
 				}
@@ -209,7 +213,6 @@
 			topspacer.style.display = oldStyle3;
 
 		}
-		//window.addEventListener('keyup', toggleFullscreen, true);
 
 		let nav = document.getElementById('nav-body-ctrls');
 		let tabs = document.getElementById('nav-body-tabs');
@@ -372,12 +375,12 @@
 			}
 		}
 
-		///// Clear Cache Button ////
+		// Clear Cache Button
 		function dispachClearCache(event) {
 			ipcRenderer.send('clearChache-click');
 		}
 
-		///// Clear Favorites Button ////
+		// Clear Favorites Button
 		function clearAllFavorites(event) {
 			try {
 				const { remote } = require('electron');
@@ -390,7 +393,7 @@
 			}
 		}
 
-		/////Settings Button /////	
+		// Settings Button
 		function showSettings(event) {
 			try {
 				const { remote } = require('electron');
@@ -431,7 +434,6 @@
 
 
 		function showHideSettings(event, message, refresh) {
-			console.log("showHideSettings" + " " + message + "  " + refresh);
 			var settingsMenuDiv = document.querySelector('.settings-menu');
 			if (!settingsMenuDiv) {
 				return;
@@ -491,7 +493,7 @@
 			return list;
 		}
 
-		/// Suggest nav bar
+		// Suggest nav bar
 		let navBar = document.getElementById('nav-ctrls-url');
 		if (navBar) navBar.addEventListener('keyup', suggestFavorites);
 
@@ -521,7 +523,7 @@
 			}
 		}
 
-		//Find on Page	
+		// Find on Page	
 		let finInwebview = document.getElementById('nav-body-views').getElementsByClassName("active")[0];
 		let findInPage;
 
@@ -536,7 +538,6 @@
 		}
 
 		ipcRenderer.on('on-find', (e, args) => {
-
 			try {
 				if (findInPage) {
 					findInPage.openFindWindow();
@@ -547,26 +548,17 @@
 			}
 		})
 
-		//Promote on last tab close:
+		// Promote on last tab close:
 		let closeTabBtns = document.getElementsByClassName("nav-tabs-tab")[0];
-		console.log("closeTabBtns " + closeTabBtns)
 		closeTabBtns.addEventListener('click', closeTab);
-		console.log("closeTabBtns A#");
-		function closeTab(e) {
 
+		function closeTab(e) {
 			console.log("CLOSE A#" + document.getElementsByClassName('nav-tabs-tab').length);
 			if (document.getElementsByClassName('nav-tabs-tab').length == 1) {
-
 				enav.newTab('https://www.google.com', {
 					close: false,
 					icon: enav.TAB_ICON,
-
 				});
-
-				//$('#nav-body-tabs').css({ opacity: 0.0 });
-				// $('#nav-body-tabs').hide()
-				// $('#nav-body-ctrls').hide()
-				//win.close();
 			}
 		};
 
