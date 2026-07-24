@@ -457,6 +457,24 @@ function favoriteSetter(a) {
 	}
 };
 
+exports.toggleFavorite = (a) => toggleFavorite(a);
+
+function toggleFavorite(a) {
+	let fav = store.get('favorites');
+	if (Array.isArray(fav)) {
+		const index = fav.indexOf(a);
+		if (index > -1) {
+			fav.splice(index, 1);
+			store.set('favorites', fav);
+			return false; // Indicate that the favorite was removed
+		} else {
+			fav.push(a);
+			store.set('favorites', fav);
+			return true; // Indicate that the favorite was added
+		}
+	}
+}
+
 exports.getFavorites = () => getFavorites();
 
 function getFavorites() {
@@ -489,15 +507,11 @@ function removeAllFav() {
 
 exports.removeFav = (a) => removeFav(a);
 
-function removeFav(a) {
+function removeFav(url) {
 	let fav = store.get('favorites');
-	let fav2 = []
-	for (var i = 0; i < fav.length; i++) {
-		if (i != a && typeof fav[i] === 'string') {
-			fav2.push(fav[i])
-		}
-	}
-	store.set('favorites', fav2);
+	console.log("removeFav" + url);
+	fav = fav.filter(item => item !== url);
+	store.set('favorites', fav);
 };
 
 exports.showSettings = (a) => settingsShow(a);

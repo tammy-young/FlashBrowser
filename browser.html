@@ -13,11 +13,18 @@
 <div class="settings-menu">
 	<div class="space-y-2 flex-col">
 		<h1 style="margin-bottom: 0;">Menu</h1>
-		<button width="100%" onclick="showHideSettings()" class="settings-button error-message">Close Menu</button>
-		<button width="100%" onclick="dispachClearCache()" class="settings-button error-message">Clear cache and
-			restart</button>
-		<button width="100%" onclick="clearAllFavorites()" class="settings-button error-message">Clear all
-			favorites</button>
+		<button width="100%" onclick="showHideSettings()" class="settings-button error-message">
+			Close Menu
+		</button>
+		<button width="100%" onclick="dispachClearCache()" class="settings-button error-message">
+			Clear cache and restart
+		</button>
+		<button width="100%" onclick="clearAllFavorites()" class="settings-button error-message">
+			Clear all favorites
+		</button>
+		<button width="100%" onclick="setHome()" class="settings-button">
+			Set As Homepage
+		</button>
 	</div>
 
 	<div id="favoritesDiv">
@@ -54,9 +61,10 @@
 	<div id="nav-body-tabs"></div>
 
 	<div id="nav-body-ctrls">
-		<button id="fs-button" type="button" title="Set as Favorite" onclick="setFavorit()">⭐️</button>
-		<button id="fs-button" title="Set as hompage" onclick="setHome()">🏠</button>
-		<button id="fs-button" title="Save SWF" onclick="SaveSWFFunction()">💾</button>
+		<button id="fs-button" type="button" title="Set as Favorite" onclick="setFavorit()">
+			<img class="favourite-icon not-favourite" src="icons/favourite-no.png" />
+			<img class="favourite-icon favourite" src="icons/favourite-yes.png" />
+		</button>
 		<button id="fs-button" title="Mute/UnMute" onclick="onMute()">🔊</button>
 		<button id="fs-button" title="Show/Hide Settings" onclick="showSettings()">⚙️</button>
 	</div>
@@ -65,6 +73,7 @@
 
 	<script>
 		const { ipcRenderer, remote } = require('electron');
+		toggleFavouriteButton(window.location.href); // Initialize the favorite button state
 		const Store = require('./store');
 		const store = new Store({
 			configName: 'user-preferences'
@@ -86,6 +95,15 @@
 			}
 		});
 
+		document.addEventListener("visibilitychange", () => {
+			if (document.visibilityState === "visible") {
+				console.log("User opened or returned to this tab.");
+				// Resume videos, restart timers, or fetch fresh data
+			} else {
+				console.log("User left the tab or minimized the window.");
+				// Pause audio/video, halt resource-heavy animations, or save progress
+			}
+		});
 
 		// Keep address bar in sync with actual webview URL (including redirects)
 		function updateAddressBar(url) {
@@ -97,6 +115,10 @@
 					console.error('Failed to update address bar:', e);
 				}
 			}
+
+			// Update suggestions and the favourites icon based on the current URL
+			try { suggestFavorites(); } catch (e) { /* no-op if function not ready */ }
+			toggleFavouriteButton(store.get('favorites')?.includes(input ? input.value : undefined));
 		}
 
 		function attachWebviewListeners(webview) {
@@ -138,8 +160,23 @@
 				}
 			});
 			mo.observe(viewsContainer, { childList: true, subtree: true });
-		}
 
+			// Observe for tab/webview activation (class changes) to update address bar and suggestions
+			const activeObserver = new MutationObserver(mutations => {
+				for (const m of mutations) {
+					if (m.type === 'attributes' && m.attributeName === 'class') {
+						const t = m.target;
+						if (t && t.classList && t.classList.contains('active')) {
+							let url = '';
+							try { url = (typeof t.getURL === 'function') ? t.getURL() : t.getAttribute('src'); } catch (e) { }
+							if (url) updateAddressBar(url);
+							suggestFavorites();
+						}
+					}
+				}
+			});
+			activeObserver.observe(viewsContainer, { subtree: true, attributes: true, attributeFilter: ['class'] });
+		}
 
 		function toggleFullscreen(event) {
 			if (event.key === 'Escape') {
@@ -185,23 +222,10 @@
 		let oldStyle2 = getComputedStyle(nav).display;
 		let oldStyle3 = getComputedStyle(topspacer).display;
 
-
-
-
-
-
-		//	const {clipboard} = require('electron');
-		//clipboard.writeText('Example String');
-		//let clipboardStr = clipboard.readText();
 		var length = window.process.argv.length;
 		var lastArgument = window.process.argv[length - 1]
 		if (lastArgument && lastArgument.indexOf("file:///") == 0) {
 			console.log(lastArgument);
-			//lastArgument = 'file:///D:/FlashPM/FlashBrowser-master/AS3.html';
-			//lastArgument = 'file:///D:/FlashPM/FlashBrowser-master/noimage.swf';
-			//var path2 = lastArgument.replace(/\\/g, "/");
-			//path2 = 'file:///' + path2;
-			// open a local file, and use a custom icon
 			enav.newTab(lastArgument, {
 				title: 'Local file'
 			})
@@ -227,15 +251,19 @@
 				favs = [favs];
 			}
 
+			const favsDiv = document.getElementById('favoritesDiv');
+
 			if (favs.length === 0) {
 				let noFavsMessage = document.createElement('p');
 				noFavsMessage.textContent = 'No favorites set.';
-				document.getElementById('favoritesDiv').appendChild(noFavsMessage);
+				favsDiv.innerHTML = "<h1>Favourites</h1>";
+				favsDiv.appendChild(noFavsMessage);
 				return;
 			}
 
-			const favsDiv = document.getElementById('favoritesDiv');
-			favsDiv.innerHTML = "<h1>Favourites</h1><ul>" + makeUL(favs).innerHTML + "</ul>";
+			// Render the list using DOM nodes (preserve event listeners)
+			favsDiv.innerHTML = "<h1>Favourites</h1>";
+			favsDiv.appendChild(makeUL(favs));
 		}
 
 		getFavorites();
@@ -271,10 +299,23 @@
 
 				const { remote } = require('electron');
 				const mainProcess = remote.require('./index');
-				mainProcess.setFavorite(favURL);
+				const isAdded = mainProcess.toggleFavorite(favURL);
 				getFavorites(); // Refresh the favorites list after adding
+				toggleFavouriteButton(isAdded);
 			} catch (error) {
 				console.error('Error setting favorite:', error);
+			}
+		}
+
+		function toggleFavouriteButton(isFavorite) {
+			const favIcon = document.querySelector('.favourite-icon.favourite');
+			const notFavIcon = document.querySelector('.favourite-icon.not-favourite');
+			if (isFavorite) {
+				favIcon.style.display = 'inline';
+				notFavIcon.style.display = 'none';
+			} else {
+				favIcon.style.display = 'none';
+				notFavIcon.style.display = 'inline';
 			}
 		}
 
@@ -304,12 +345,6 @@
 			}
 		}
 
-		function SaveSWFFunction(event) {
-			ipcRenderer.send('download-button');
-			console.log("Send save SWF")
-		}
-
-
 		var isWin = window.process.platform === "win32";
 		if (isWin) {
 			var windowsControls = document.getElementById('window-controls');
@@ -338,8 +373,6 @@
 		}
 
 		///// Clear Cache Button ////
-
-
 		function dispachClearCache(event) {
 			ipcRenderer.send('clearChache-click');
 		}
@@ -386,11 +419,10 @@
 			}
 		}
 
-
-		function jsfunction(e) {
-			//console.log(e.target.href)
-			e.preventDefault(); //optional);
+		function openInNewTab(e) {
+			e.preventDefault();
 			enav.newTab(e.target.href);
+			toggleFavouriteButton(store.get('favorites')?.includes(e.target.href));
 		}
 
 		var div = document.querySelector('.settings-menu');
@@ -427,22 +459,21 @@
 				var item = document.createElement('li');
 				item.className = "space-x-2 flex-row";
 				if (typeof array[i] === 'string') {
-					console.log("is string" + array[i]);
 					var a = document.createElement('a')
 					a.text = array[i];
 					a.href = array[i]
-					a.onclick = jsfunction;
+					a.onclick = openInNewTab;
 
 					let btn = document.createElement("button");
 					btn.innerHTML = "Remove";
-					btn.id = i;
-					btn.className = "remove-button";
+					btn.id = array[i];
 					btn.onclick = function (event) {
 						try {
 							const { remote } = require('electron');
 							const mainProcess = remote.require('./index');
 							mainProcess.removeFav(event.target.id);
 							getFavorites(); // Refresh the favorites list after removal
+							toggleFavouriteButton(store.get('favorites')?.includes(event.target.id)); // Update the favorite button state
 						} catch (error) {
 							console.error('Error removing favorite:', error);
 						}
@@ -461,31 +492,33 @@
 		}
 
 		/// Suggest nav bar
-		let navBar = document.getElementById('nav-ctrls-url')
-		navBar.addEventListener('keyup', checkFavorites);
-		function checkFavorites(e) {
+		let navBar = document.getElementById('nav-ctrls-url');
+		if (navBar) navBar.addEventListener('keyup', suggestFavorites);
 
-			let listFavorites = store.get('favorites');
-			console.log('checkFavoritess', listFavorites);
-			if (listFavorites) {
-				let inputText = navBar.value;
-				let deURL;
+		function suggestFavorites(e) {
+			let listFavorites = store.get('favorites') || [];
+			if (!listFavorites.length) return;
 
-				for (var i = 0; i < listFavorites.length; i++) {
+			let inputText = navBar ? navBar.value : '';
+			let deURL;
 
-					deURL = listFavorites[i].replace(/(^\w+:|^)\/\//, '');
-					deURL = deURL.replace("www.", "");
-					//console.log(i  + "  " + listFavorites[i] + "!" + deURL);
-					if (e.keyCode != 8 && e.keyCode != 17 && !e.ctrlKey && deURL != inputText && deURL && deURL.indexOf(inputText) == 0) {
+			for (var i = 0; i < listFavorites.length; i++) {
+				deURL = listFavorites[i].replace(/(^\w+:|^)\/\//, '');
+				deURL = deURL.replace("www.", "");
+				if (!deURL) continue;
 
-						console.log("Fond it" + deURL)
+				if (e && (e.keyCode === 8 || e.keyCode === 17 || e.ctrlKey)) continue;
+
+				if (deURL !== inputText && deURL.indexOf(inputText) === 0) {
+					try {
 						navBar.value = deURL;
-						navBar.setSelectionRange(inputText.length, 999);
-
+						if (e) navBar.setSelectionRange(inputText.length, 999);
+					} catch (err) {
+						console.error('Error suggesting favorite:', err);
 					}
+					break;
 				}
 			}
-
 		}
 
 		//Find on Page	

@@ -456,8 +456,8 @@ body {
 }
 
 #fs-button {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background-color: transparent;
+  border: 0;
   border-radius: 100%;
   cursor: pointer;
   overflow: hidden;
@@ -465,7 +465,6 @@ body {
   transform: none;
   filter: none;
   padding: 7px;
-  padding-left: 10px;
   width: 34px;
   height: 34px;
   display: inline-flex;
@@ -473,6 +472,12 @@ body {
   justify-content: center;
   transition: background 300ms ease, transform 300ms ease;
   margin-left: 4px;
+}
+
+.favourite-icon {
+  width: 16px;
+  height: 16px;
+  filter: brightness(0) invert(1);
 }
 
 .settings-button {

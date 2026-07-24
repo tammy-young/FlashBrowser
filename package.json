@@ -8,7 +8,7 @@
   "main": "index.js",
   "scripts": {
     "start": "electron .",
-    "dev": "ELECTRON_ENABLE_LOGGING=1 electronmon .",
+    "dev": "electronmon .",
     "publish": "electron-builder --win -p always",
     "build": "electron-builder --win",
     "build1": "electron-packager . FlashBrowser --platform=darwin --overwrite --icon=icon.icns",
