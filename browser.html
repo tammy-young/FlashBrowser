@@ -62,11 +62,16 @@
 
 	<div id="nav-body-ctrls">
 		<button id="fs-button" type="button" title="Set as Favorite" onclick="setFavorit()">
-			<img class="favourite-icon not-favourite" src="icons/favourite-no.png" />
-			<img class="favourite-icon favourite" src="icons/favourite-yes.png" />
+			<img class="nav-icon not-favourite" src="icons/favourite-no.png" />
+			<img class="nav-icon favourite" src="icons/favourite-yes.png" />
 		</button>
-		<button id="fs-button" title="Mute/UnMute" onclick="onMute()">🔊</button>
-		<button id="fs-button" title="Show/Hide Settings" onclick="showSettings()">⚙️</button>
+		<button id="fs-button" title="Mute/UnMute" onclick="onMute()">
+			<img class="nav-icon mute" src="icons/mute.png" />
+			<img class="nav-icon unmute" src="icons/unmute.png" />
+		</button>
+		<button id="fs-button" title="Show/Hide Settings" onclick="showSettings()">
+			<img class="nav-icon" src="icons/settings-menu.png" />
+		</button>
 	</div>
 
 	<div id="nav-body-views"></div>
@@ -233,12 +238,7 @@
 				title: 'Local file'
 			})
 		}
-		//else if(clipboardStr.indexOf("https://") == 0) {
-		//  enav.newTab(clipboardStr);
-
-		//}
 		else if (home) {
-			//console.log("WE HAGE CUSTOM HOMEPAGE" + home);
 			enav.newTab(home, { icon: "icons/restore-w-24.png" })
 		}
 		else {
@@ -311,8 +311,8 @@
 		}
 
 		function toggleFavouriteButton(isFavorite) {
-			const favIcon = document.querySelector('.favourite-icon.favourite');
-			const notFavIcon = document.querySelector('.favourite-icon.not-favourite');
+			const favIcon = document.querySelector('.nav-icon.favourite');
+			const notFavIcon = document.querySelector('.nav-icon.not-favourite');
 			if (isFavorite) {
 				favIcon.style.display = 'inline';
 				notFavIcon.style.display = 'none';
@@ -361,16 +361,19 @@
 		}
 
 		// Mute button
-		function onMute(event) {
-			webview = document.getElementById('nav-body-views').getElementsByClassName("active")[0];
+		function onMute(muted) {
+			const webview = document.querySelector('.nav-views-view.active');
 			if (webview) {
-				if (webview.isAudioMuted()) {
-					webview.setAudioMuted(false);
-					muteButton.innerHTML = '🔊';
+				console.log("Current webview audioMuted state:", webview.audioMuted);
+				if (webview.audioMuted || !muted) {
+					webview.audioMuted = false;
+					document.querySelector('.nav-icon.mute').style.display = 'none';
+					document.querySelector('.nav-icon.unmute').style.display = 'inline';
 				}
 				else {
-					webview.setAudioMuted(true);
-					muteButton.innerHTML = '🔈';
+					webview.audioMuted = true;
+					document.querySelector('.nav-icon.mute').style.display = 'inline';
+					document.querySelector('.nav-icon.unmute').style.display = 'none';
 				}
 			}
 		}
@@ -561,6 +564,8 @@
 				});
 			}
 		};
+
+		onMute(false); // Initialize the mute button state
 
 	</script>
 </body>
