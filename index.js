@@ -395,7 +395,6 @@ app.on('ready', () => {
 		});
 
 		globalShortcut.register("CmdOrCtrl+=", () => {
-			console.log("CmdOrCtrl+");
 			mainWindow.webContents.zoomFactor = mainWindow.webContents.getZoomFactor() + 0.2;
 		});
 		globalShortcut.register("CmdOrCtrl+-", () => {

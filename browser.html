@@ -2,14 +2,9 @@
 <html>
 
 <head>
-	<link rel="stylesheet" href="themes/chrome-like.css">
+	<link rel="stylesheet" href="themes/global.css">
 </head>
 <p id='topspacer'></p>
-<div id="flash-tabs" style="display: inline;">
-	<embed id="FlashTab1" src="about:blank#404" style='display: none;' width="320" height="200"></embed>
-	<embed id="FlashTab2" src="about:blank#404" style='display: none;' width="320" height="200"></embed>
-	<embed id="FlashTab3" src="about:blank#404" width="320" style='display: none;' width="320" height="200"></embed>
-</div>
 <div class="settings-menu">
 	<div class="space-y-2 flex-col">
 		<h1 style="margin-bottom: 0;">Menu</h1>
@@ -97,16 +92,6 @@
 					webview.setAttribute('plugins', '');
 				}
 				return { options };
-			}
-		});
-
-		document.addEventListener("visibilitychange", () => {
-			if (document.visibilityState === "visible") {
-				console.log("User opened or returned to this tab.");
-				// Resume videos, restart timers, or fetch fresh data
-			} else {
-				console.log("User left the tab or minimized the window.");
-				// Pause audio/video, halt resource-heavy animations, or save progress
 			}
 		});
 
@@ -216,7 +201,6 @@
 			tabs.style.display = oldStyle1;
 			nav.style.display = oldStyle2;
 			topspacer.style.display = oldStyle3;
-
 		}
 
 		let nav = document.getElementById('nav-body-ctrls');
@@ -248,11 +232,6 @@
 		function getFavorites() {
 			const mainProcess = remote.require('./index');
 			let favs = mainProcess.getFavorites();
-
-			if (!Array.isArray(favs)) {
-				console.log('Favorites is not an array, converting to array.');
-				favs = [favs];
-			}
 
 			const favsDiv = document.getElementById('favoritesDiv');
 
@@ -300,7 +279,6 @@
 					return;
 				}
 
-				const { remote } = require('electron');
 				const mainProcess = remote.require('./index');
 				const isAdded = mainProcess.toggleFavorite(favURL);
 				getFavorites(); // Refresh the favorites list after adding
@@ -340,7 +318,6 @@
 					return;
 				}
 
-				const { remote } = require('electron');
 				const mainProcess = remote.require('./index');
 				mainProcess.sethome(homeURL);
 			} catch (error) {
@@ -364,7 +341,6 @@
 		function onMute(muted) {
 			const webview = document.querySelector('.nav-views-view.active');
 			if (webview) {
-				console.log("Current webview audioMuted state:", webview.audioMuted);
 				if (webview.audioMuted || !muted) {
 					webview.audioMuted = false;
 					document.querySelector('.nav-icon.mute').style.display = 'none';
@@ -386,7 +362,6 @@
 		// Clear Favorites Button
 		function clearAllFavorites(event) {
 			try {
-				const { remote } = require('electron');
 				const mainProcess = remote.require('./index.js');
 				mainProcess.removeAllFav();
 				getFavorites(); // Refresh the favorites list after clearing
@@ -399,7 +374,6 @@
 		// Settings Button
 		function showSettings(event) {
 			try {
-				const { remote } = require('electron');
 				const mainProcess = remote.require('./index');
 				mainProcess.showSettings();
 			} catch (error) {
@@ -474,7 +448,6 @@
 					btn.id = array[i];
 					btn.onclick = function (event) {
 						try {
-							const { remote } = require('electron');
 							const mainProcess = remote.require('./index');
 							mainProcess.removeFav(event.target.id);
 							getFavorites(); // Refresh the favorites list after removal
@@ -532,7 +505,6 @@
 
 		try {
 			const FindInPage = require('electron-find').FindInPage;
-			const { remote } = require('electron');
 			findInPage = new FindInPage(remote.getCurrentWebContents(), {
 				parentElement: document.querySelector('#nav-body-views'), offsetTop: 70, boxBgColor: '#000000', boxShadowColor: '#111111'
 			});

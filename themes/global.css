@@ -230,7 +230,7 @@ body {
 
 .settings-menu {
   position: fixed;
-  width: 50%;
+  width: 25%;
   height: calc(100% - 75px);
   top: 75px;
   right: 0;
