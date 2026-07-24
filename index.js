@@ -69,9 +69,7 @@ app.commandLine.appendSwitch("--log-level", 4);
 try {
 	const pluginPath = path.join(__dirname, pluginName);
 	app.commandLine.appendSwitch('ppapi-flash-path', pluginPath);
-	console.log(`Flash plugin loaded from: ${pluginPath}`);
 } catch (error) {
-	console.error('Failed to load Flash plugin:', error);
 }
 //app.commandLine.appendSwitch('ppapi-flash-path', path.join(__dirname.includes(".asar") ? process.resourcesPath : __dirname, "plugins/" + pluginName));
 
@@ -151,7 +149,6 @@ app.on('ready', () => {
 
 	let { width, height, isMax } = store.get('windowBounds');
 	let filePath = 'filePath';
-	console.log("inti param" + process.argv);
 
 	// SECURITY: Validate command-line arguments for SWF file paths
 	if (process.argv.length >= 2 && process.argv[1].indexOf(".swf") > 1) {
@@ -315,8 +312,7 @@ app.on('ready', () => {
 
 
 	// Upper Limit is working of 500 %
-	mainWindow.webContents.setVisualZoomLevelLimits(1, 5).then(console.log("Zoom Levels Have been Set between 100% and 500%")).catch((err) => console.log(err));
-
+	mainWindow.webContents.setVisualZoomLevelLimits(1, 5).catch((err) => console.log(err));
 
 	mainWindow.on('resize', () => {
 		var isMax = mainWindow.isMaximized() || mainWindow.isFullScreen()
