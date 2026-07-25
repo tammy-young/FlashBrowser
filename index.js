@@ -248,7 +248,6 @@ app.on('ready', () => {
 	mainWindow.webContents.session.webRequest.onBeforeSendHeaders(filter, (details, callback) => {
 
 		if (details.url && details.url.indexOf(".swf") === -1) {
-			console.log("BIGPOINT OR WHATSUP")
 			details.requestHeaders['X-APP'] = app.getVersion();
 			details.requestHeaders['User-Agent'] = 'BigpointClient/1.4.6';
 			if (details.url.indexOf("whatsapp") > 0) {
@@ -256,8 +255,6 @@ app.on('ready', () => {
 			}
 		}
 		else {
-			//	app.commandLine.appendSwitch('ppapi-flash-path', null);
-			console.log("swf url", details.url)
 			swfURL = details.url
 		}
 
@@ -364,11 +361,15 @@ app.on('ready', () => {
 		function toggleWindowFullScreen() {
 			mainWindow.setFullScreen(!mainWindow.isFullScreen())
 		}
-		ipcMain.on('fullScreen-click', toggleWindowFullScreen);
+		if (ipcMain.listenerCount('fullScreen-click') === 0) {
+			ipcMain.on('fullScreen-click', toggleWindowFullScreen);
+		}
 
 
 
-		ipcMain.on('clearChache-click', clearCacheFunction);
+		if (ipcMain.listenerCount('clearChache-click') === 0) {
+			ipcMain.on('clearChache-click', clearCacheFunction);
+		}
 		async function clearCacheFunction() {
 			console.log('clearCacheFunction()!')
 			await mainWindow.webContents.session.clearCache()
