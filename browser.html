@@ -258,7 +258,6 @@
 		var length = window.process.argv.length;
 		var lastArgument = window.process.argv[length - 1]
 		if (lastArgument && lastArgument.indexOf("file:///") == 0) {
-			console.log(lastArgument);
 			enav.newTab(lastArgument, {
 				title: 'Local file'
 			})
@@ -370,7 +369,6 @@
 		if (isWin) {
 			var windowsControls = document.getElementById('window-controls');
 			windowsControls.style = "display: true;";
-			console.log(2233)
 		}
 		else {
 			document.getElementById('nav-body-tabs').style = "padding-left: 5rem;";
@@ -406,7 +404,6 @@
 				const mainProcess = remote.require('./index.js');
 				mainProcess.removeAllFav();
 				getFavorites(); // Refresh the favorites list after clearing
-				console.log("Cleaned favorites")
 			} catch (error) {
 				console.error('Error clearing favorites:', error);
 			}
@@ -557,7 +554,6 @@
 			try {
 				if (findInPage) {
 					findInPage.openFindWindow();
-					console.log(223 + document.querySelector('#nav-body-views'));
 				}
 			} catch (error) {
 				console.error('Error opening find window:', error);
@@ -569,7 +565,6 @@
 		closeTabBtns.addEventListener('click', closeTab);
 
 		function closeTab(e) {
-			console.log("CLOSE A#" + document.getElementsByClassName('nav-tabs-tab').length);
 			if (document.getElementsByClassName('nav-tabs-tab').length == 1) {
 				enav.newTab('https://www.google.com', {
 					close: false,

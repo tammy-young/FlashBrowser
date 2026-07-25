@@ -29,11 +29,9 @@ switch (process.platform) {
 				fiae('win32');
 			case 'x32':
 				pluginName = 'flashver/pepflashplayer32.dll'
-				console.log("ran!");
 				break
 			case 'x64':
 				pluginName = 'flashver/pepflashplayer64.dll'
-				console.log("ran!");
 				break
 		}
 		break
@@ -157,7 +155,6 @@ app.on('ready', () => {
 
 			// Validate HTTP/HTTPS URLs
 			if (input.indexOf("http") >= 0) {
-				console.log(998 + input);
 				const cleanUrl = input.replace("FlashBrowser:", "");
 
 				// Basic URL validation to prevent malformed URLs
@@ -287,11 +284,6 @@ app.on('ready', () => {
 		mainWindow = null;
 	});
 
-
-
-
-
-
 	mainWindow.once('ready-to-show', () => {
 		if (isMax) {
 			if (process.platform === "win32") {
@@ -302,20 +294,17 @@ app.on('ready', () => {
 				mainWindow.setFullScreen(true)
 			}
 
-
 		}
 		mainWindow.show()
 	})
 
-
 	// Upper Limit is working of 500 %
-	mainWindow.webContents.setVisualZoomLevelLimits(1, 5).catch((err) => console.log(err));
+	mainWindow.webContents.setVisualZoomLevelLimits(1, 5).catch((err) => console.error(err));
 
 	mainWindow.on('resize', () => {
 		var isMax = mainWindow.isMaximized() || mainWindow.isFullScreen()
 
 		if (isMax) {
-			console.log(isMax);
 			let { width, height, max } = store.get('windowBounds');
 			store.set('windowBounds', { width, height, isMax });
 		}
@@ -326,19 +315,14 @@ app.on('ready', () => {
 
 	});
 
-
-
 	ipcMain.on('download-button', async (event) => {
 		const winX = BrowserWindow.getFocusedWindow();
-		console.log(swfURL, 9921);
 
 		await download(winX, swfURL);
 	});
 
-
 	app.on('browser-window-focus', () => {
 		globalShortcut.register('CTRL+SHIFT+q', () => {
-			console.log(22321 + enav)
 			NAV.newTab('https://www.google.com', {
 				close: false,
 				icon: NAV.TAB_ICON,
@@ -350,14 +334,6 @@ app.on('ready', () => {
 			mainWindow.webContents.send('on-find');
 		});
 
-
-		//globalShortcut.register("F11", toggleWindowFullScreen);
-		//globalShortcut.register("Escape", () => mainWindow.setFullScreen(true));
-
-
-
-
-
 		function toggleWindowFullScreen() {
 			mainWindow.setFullScreen(!mainWindow.isFullScreen())
 		}
@@ -365,27 +341,16 @@ app.on('ready', () => {
 			ipcMain.on('fullScreen-click', toggleWindowFullScreen);
 		}
 
-
-
 		if (ipcMain.listenerCount('clearChache-click') === 0) {
 			ipcMain.on('clearChache-click', clearCacheFunction);
 		}
 		async function clearCacheFunction() {
-			console.log('clearCacheFunction()!')
 			await mainWindow.webContents.session.clearCache()
 				.then(() => {
-					console.log('Cleared cache done! restarting..')
 					app.relaunch();
 					app.exit();
 				})
-
-			//console.log(22331,mainWindow.webContents.clearCache )
-			//let session = mainWindow.webContents.session;
-			//	mainWindow.webContents.clearCache();
-			//	app.relaunch();
-			//	app.exit();
 		}
-
 
 		globalShortcut.register("CTRL+SHIFT+I", () => {
 			mainWindow.webContents.openDevTools();
@@ -410,34 +375,20 @@ app.on('ready', () => {
 		globalShortcut.unregisterAll()
 	})
 
-
 	mainWindow.webContents.zoomFactor = 1;
-
-
 
 	var { ElectronBlocker } = require('@cliqz/adblocker');
 	var { fetch } = require('cross-fetch');
-	//ElectronBlocker.fromPrebuiltAdsAndTracking(fetch).then((blocker)=>{	
-	//	blocker.enableBlockingInSession(mainWindow.webContents.session);
-	//	//console.log("--AddBlcoker started" + mainWindow.webContents.session);
-	//});
-
-
-
-
 });
 
 app.on('open-file', (event, path) => {
 	event.preventDefault();
-	console.log(path);
 });
-
 
 exports.sethome = (a) => homeSetter(a);
 
 function homeSetter(a) {
 	store.set('homepage', a);
-	console.log("Favorite url:" + a);
 };
 
 exports.setFavorite = (a) => favoriteSetter(a);
@@ -494,18 +445,14 @@ exports.removeAllFav = (a) => removeAllFav(a);
 function removeAllFav() {
 
 	let fav2 = []
-
 	store.set('favorites', fav2);
-	console.log("removeAllFav");
 
 };
-
 
 exports.removeFav = (a) => removeFav(a);
 
 function removeFav(url) {
 	let fav = store.get('favorites');
-	console.log("removeFav" + url);
 	fav = fav.filter(item => item !== url);
 	store.set('favorites', fav);
 };
@@ -517,44 +464,6 @@ function settingsShow(a) {
 	mainWindow.webContents.send('ping', fav, a);
 };
 
-
 app.on('window-all-closed', () => {
-	//if (process.platform !== 'darwin') {
 	app.quit();
-	//}
 });
-/*
-const {autoUpdater} = require("electron-updater");
-
- autoUpdater.on('checking-for-update', () => {
-		sendWindow('checking-for-update', '');
-});
-
-autoUpdater.on('update-available', () => {
-		sendWindow('update-available', '');
-});
-
-autoUpdater.on('update-not-available', () => {
-		sendWindow('update-not-available', '');
-});
-
-autoUpdater.on('error', (err) => {
-		sendWindow('error', 'Error: ' + err);
-});
-
-autoUpdater.on('download-progress', (d) => {
-		sendWindow('download-progress', {
-				speed: d.bytesPerSecond,
-				percent: d.percent,
-				transferred: d.transferred,
-				total: d.total
-		});
-});
-
-autoUpdater.on('update-downloaded', () => {
-		sendWindow('update-downloaded', 'Update downloaded');
-		autoUpdater.quitAndInstall();
-}); */
-
-
-
